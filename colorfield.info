@@ -1,0 +1,4 @@
+name = Color Fields
+description = A color field for attaching colors to entities
+package = Miscellaneous
+core = 7.x
