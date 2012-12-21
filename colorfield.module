@@ -316,8 +316,6 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
   $widget = $element;
   $widget['#delta'] = $delta;
   switch ($instance['widget']['type']) {
-    // DELIBERATE fall-through: From here on the colorfield_text and
-    // colorfield_colorpicker are exactly the same.
     case 'colorfield_text':
       $widget += array(
         '#type' => 'textfield',
@@ -326,19 +324,23 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
         // configurations where all characters won't fit in input field.
         '#size' => 7,
         '#maxlength' => 7,
-        '#suffix' => '<div class="colorfield-colorpicker"></div>',
-        '#attributes' => array('class' => array('edit-colorfield-colorpicker')),
-        '#attached' => array(
-          // Add Farbtastic color picker.
-          'library' => array(
-            array('system', 'farbtastic'),
-          ),
-          // Add javascript to trigger the colorpicker.
-          'js' => array(
-            drupal_get_path('module', 'colorfield') . '/lib/js/colorfield-farbtastic.js',
-          ),
-        ),
       );
+      if ($instance['widget']['settings']['enable_colorpicker']) {
+        $widget += array(
+          '#suffix' => '<div class="colorfield-picker"></div>',
+          '#attributes' => array('class' => array('colorfield-colorpicker')),
+          '#attached' => array(
+            // Add Farbtastic color picker.
+            'library' => array(
+              array('system', 'farbtastic'),
+            ),
+            // Add javascript to trigger the colorpicker.
+            'js' => array(
+              drupal_get_path('module', 'colorfield') . '/lib/js/colorfield-farbtastic.js',
+            ),
+          ),
+        );
+      }
       break;
 
     case 'colorfield_3text':
@@ -380,6 +382,24 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
 
   $element['rgb'] = $widget;
   return $element;
+}
+
+/**
+ * Implements hook_field_widget_settings_form().
+ */
+function colorfield_field_widget_settings_form($field, $instance) {
+  $widget = $instance['widget'];
+  $settings = $widget['settings'];
+
+  if ($widget['type'] == 'colorfield_text') {
+    $form['enable_colorpicker'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Enable the color picker.'),
+      '#default_value' => isset($settings['enable_colorpicker'])? $settings['enable_colorpicker'] : FALSE,
+    );
+  }
+
+  return $form;
 }
 
 
