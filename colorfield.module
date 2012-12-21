@@ -91,13 +91,13 @@ function colorfield_field_formatter_info() {
   return array(
     // This formatter displays the raw value of the color.
     'colorfield_raw_rgb' => array(
-      'label' => t('Display the raw RGB value'),
+      'label' => t('Raw RGB value'),
       'field types' => array('colorfield_rgb'),
       'settings' => array('display_hash' => TRUE),
     ),
     // This formatter displays a DIV of the specified color
     'colorfield_color_swatch' => array(
-      'label' => t('Display a simple block in the appropriate color'),
+      'label' => t('Color swatch'),
       'field types' => array('colorfield_rgb'),
       'settings' => array('width' => 20, 'height' => 20),
     ),
@@ -109,7 +109,7 @@ function colorfield_field_formatter_info() {
     ),
     // This formatter changes the background color of the content region.
     'colorfield_color_background' => array(
-      'label' => t('Change the background of the output text'),
+      'label' => t('Background of the output text'),
       'field types' => array('colorfield_rgb'),
     ),
   );
@@ -187,7 +187,7 @@ function colorfield_field_formatter_settings_summary($field, $instance, $view_mo
   }
   // Displays if the hash is displayed or not.
   else if ($display['type'] == 'colorfield_raw_rgb') {
-    $summary[] = ($settings['display_hash']) ? t('The raw will be prefixed with #') : t('The raw will not be prefixed with #');
+    $summary[] = ($settings['display_hash']) ? t('The raw will be prefixed with #.') : t('The raw will not be prefixed with #.');
   }
 
   return implode('<br />', $summary);
