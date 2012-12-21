@@ -4,6 +4,21 @@
  * A simple color field module - with picker - based closely on the module in Examples.
  */
 
+/**
+ * Implements hook_theme().
+ */
+function colorfield_theme() {
+  return array(
+    'colorfield_simpletext' => array(
+      'variables' => array(
+        'text_color' => 'black', 'text_message' => '',
+      ),
+      'template' => 'colorfield-simpletext',
+    ),
+  );
+}
+
+
 /***************************************************************
  * Field Type API hooks
  ***************************************************************/
@@ -78,6 +93,7 @@ function colorfield_field_formatter_info() {
     'colorfield_simple_text' => array(
       'label' => t('Simple text-based formatter'),
       'field types' => array('colorfield_rgb'),
+      'settings' => array('message' => t('The color code in this field is @code')),
     ),
     // This formatter changes the background color of the content region.
     'colorfield_color_background' => array(
@@ -90,6 +106,48 @@ function colorfield_field_formatter_info() {
       'field types' => array('colorfield_rgb'),
     ),
   );
+}
+
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function colorfield_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  // Expose the message to display as a setting.
+  if ($display['type'] == 'colorfield_simple_text') {
+    $element['message'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Message to display'),
+      '#default_value' => $settings['message'],
+      '#description' => t('Note that you can use @code to display the value of the code in the message.'),
+    );
+  }
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function colorfield_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $summary = array();
+
+  // Display the dynamic message and replace @code by the value of the color
+  // code if it exists in the message.
+  if ($display['type'] == 'colorfield_simple_text') {
+    $summary[] = t('Message displayed: %message', array('%message' => $settings['message']));
+    if (strpos($settings['message'], '@code')) {
+      $summary[] = '<small>' . t('Note that @code will be replaced by the color picked.') . '</small>';
+    }
+  }
+
+  return implode('<br />', $summary);
 }
 
 /**
@@ -111,15 +169,9 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
     case 'colorfield_simple_text':
       foreach ($items as $delta => $item) {
         $element[$delta] = array(
-          // We create a render array to produce the desired markup,
-          // "<p style="color: #hexcolor">The color code ... #hexcolor</p>".
-          // See theme_html_tag().
-          '#type' => 'html_tag',
-          '#tag' => 'p',
-          '#attributes' => array(
-            'style' => 'color: ' . $item['rgb'],
-          ),
-          '#value' => t('The color code in this field is @code', array('@code' => $item['rgb'])),
+          '#theme' => 'colorfield_simpletext',
+          '#text_color' => $item['rgb'],
+          '#text_message' => t($display['settings']['message'], array('@code' => $item['rgb'])),
         );
       }
       break;
