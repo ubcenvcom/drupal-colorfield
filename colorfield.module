@@ -35,7 +35,7 @@ function colorfield_field_info() {
     'colorfield_rgb' => array(
       'label' => t('Color Picker (RGB)'),
       'description' => t('A field composed of an RGB color.'),
-      'default_widget' => 'colorfield_3text',
+      'default_widget' => 'colorfield_text',
       'default_formatter' => 'colorfield_simple_text',
       'instance_settings' => array('text_processing' => 0),
     ),
@@ -288,10 +288,6 @@ function colorfield_field_widget_info() {
       'label' => t('RGB text field'),
       'field types' => array('colorfield_rgb'),
     ),
-    'colorfield_colorpicker' => array(
-      'label' => t('Color Picker'),
-      'field types' => array('colorfield_rgb'),
-    ),
   );
 }
 
@@ -319,30 +315,7 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
 
   $widget = $element;
   $widget['#delta'] = $delta;
-
   switch ($instance['widget']['type']) {
-
-    case 'colorfield_colorpicker':
-      $widget += array(
-        '#suffix' => '<div class="colorfield-colorpicker"></div>',
-        '#attributes' => array('class' => array('edit-colorfield-colorpicker')),
-        '#attached' => array(
-          // Add Farbtastic color picker.
-          /**
-          'library' => array(
-          array('system', 'farbtastic'),
-          ), 
-           */
-          // Add javascript to trigger the colorpicker.                    
-          'js' => array(
-            drupal_get_path('module', 'colorfield') . '/lib/js/colorpicker.js',
-            drupal_get_path('module', 'colorfield') . '/colorfield.js'
-          ),
-          // And the CSS
-          'css' => array(drupal_get_path('module', 'colorfield') . '/lib/css/colorpicker.css'),
-        ),
-      );
-
     // DELIBERATE fall-through: From here on the colorfield_text and
     // colorfield_colorpicker are exactly the same.
     case 'colorfield_text':
@@ -353,6 +326,18 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
         // configurations where all characters won't fit in input field.
         '#size' => 7,
         '#maxlength' => 7,
+        '#suffix' => '<div class="colorfield-colorpicker"></div>',
+        '#attributes' => array('class' => array('edit-colorfield-colorpicker')),
+        '#attached' => array(
+          // Add Farbtastic color picker.
+          'library' => array(
+            array('system', 'farbtastic'),
+          ),
+          // Add javascript to trigger the colorpicker.
+          'js' => array(
+            drupal_get_path('module', 'colorfield') . '/lib/js/colorfield-farbtastic.js',
+          ),
+        ),
       );
       break;
 
