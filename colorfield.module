@@ -1,7 +1,8 @@
 <?php
 /**
  * @file
- * A simple color field module - with picker - based closely on the module in Examples.
+ * A simple color field module - with picker - based closely on the module
+ * in Examples.
  */
 
 /**
@@ -36,7 +37,7 @@ function colorfield_field_info() {
       'description' => t('A field composed of an RGB color.'),
       'default_widget' => 'colorfield_3text',
       'default_formatter' => 'colorfield_simple_text',
-      'instance_settings' => array('text_processing' => 0), 
+      'instance_settings' => array('text_processing' => 0),
     ),
   );
 }
@@ -56,7 +57,7 @@ function colorfield_field_info() {
 function colorfield_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
   foreach ($items as $delta => $item) {
     if (!empty($item['rgb'])) {
-      if (! preg_match('@^#[0-9a-fA-F]{6}$@', $item['rgb'])) {
+      if (!preg_match('@^#[0-9a-fA-F]{6}$@', $item['rgb'])) {
         $errors[$field['field_name']][$langcode][$delta][] = array(
           'error' => 'colorfield_invalid',
           'message' => t('Color must be in the HTML format #abcdef.'),
@@ -65,7 +66,6 @@ function colorfield_field_validate($entity_type, $entity, $field, $instance, $la
     }
   }
 }
-
 
 /**
  * Implements hook_field_is_empty().
@@ -101,9 +101,10 @@ function colorfield_field_formatter_info() {
       'field types' => array('colorfield_rgb'),
     ),
     // This formatter displays a DIV of the specified color
-    'colorfield_color_block' => array(
+    'colorfield_color_swatch' => array(
       'label' => t('Display a simple block in the appropriate color'),
       'field types' => array('colorfield_rgb'),
+      'settings' => array('width' => 20, 'height' => 20),
     ),
   );
 }
@@ -125,6 +126,26 @@ function colorfield_field_formatter_settings_form($field, $instance, $view_mode,
       '#description' => t('Note that you can use @code to display the value of the code in the message.'),
     );
   }
+  // Expose the the block width and height.
+  if ($display['type'] == 'colorfield_color_swatch') {
+    $element['width'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Width of the block'),
+      '#size' => 3,
+      '#required' => TRUE,
+      '#element_validate' => array('element_validate_number'),
+      '#default_value' => $settings['width'],
+    );
+
+    $element['height'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Height of the block'),
+      '#size' => 3,
+      '#required' => TRUE,
+      '#element_validate' => array('element_validate_number'),
+      '#default_value' => $settings['height'],
+    );
+  }
 
   return $element;
 }
@@ -144,6 +165,13 @@ function colorfield_field_formatter_settings_summary($field, $instance, $view_mo
     $summary[] = t('Message displayed: %message', array('%message' => $settings['message']));
     if (strpos($settings['message'], '@code')) {
       $summary[] = '<small>' . t('Note that @code will be replaced by the color picked.') . '</small>';
+    }
+  }
+  // Display the width & height of the block as summary.
+  else {
+    if ($display['type'] == 'colorfield_color_swatch') {
+      $summary[] = t('Width: @width px', array('@width' => $settings['width']));
+      $summary[] = t('Height: @height px', array('@height' => $settings['height']));
     }
   }
 
@@ -195,18 +223,18 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
         );
       }
       break;
-    // Adds an empty DIV, the background of which uses the selected colour. Could be used, for example, to
-    // display a small block of colour in a legend.
-    case 'colorfield_color_block':
+    // Adds an empty DIV, the background of which uses the selected colour.
+    // Could be used, for example, to display a swatch of the color.
+    case 'colorfield_color_swatch':
       foreach ($items as $delta => $item) {
         $element[$delta] = array(
           '#type' => 'html_tag',
           '#tag' => 'div',
-          '#value' => ' ',
           '#attributes' => array(
-            'style' => 'width: 20px; height: 20px; background-color:' . $item['rgb'] . ';'
-            ),
-          );        
+            'class' => array('colorfield-color-swatch'),
+            'style' => 'width: ' . $display['settings']['width'] . 'px; height: ' . $display['settings']['height'] . 'px; background-color:' . $item['rgb'] . ';'
+          ),
+        );
       }
       break;
   }
@@ -235,8 +263,8 @@ function colorfield_field_widget_info() {
       'field types' => array('colorfield_rgb'),
     ),
     'colorfield_3text' => array(
-       'label' => t('RGB text field'),
-       'field types' => array('colorfield_rgb'),
+      'label' => t('RGB text field'),
+      'field types' => array('colorfield_rgb'),
     ),
     'colorfield_colorpicker' => array(
       'label' => t('Color Picker'),
@@ -279,14 +307,17 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
         '#attached' => array(
           // Add Farbtastic color picker.
           /**
-            'library' => array(
-            array('system', 'farbtastic'),
+          'library' => array(
+          array('system', 'farbtastic'),
           ), 
            */
           // Add javascript to trigger the colorpicker.                    
-          'js' => array(drupal_get_path('module', 'colorfield') . '/lib/js/colorpicker.js', drupal_get_path('module', 'colorfield') . '/colorfield.js'),
+          'js' => array(
+            drupal_get_path('module', 'colorfield') . '/lib/js/colorpicker.js',
+            drupal_get_path('module', 'colorfield') . '/colorfield.js'
+          ),
           // And the CSS
-          'css' => array(drupal_get_path('module', 'colorfield') . '/lib/css/colorpicker.css'),  
+          'css' => array(drupal_get_path('module', 'colorfield') . '/lib/css/colorpicker.css'),
         ),
       );
 
@@ -316,12 +347,10 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
       $widget += array(
         '#type' => 'fieldset',
         '#element_validate' => array('colorfield_3text_validate'),
-
         // #delta is set so that the validation function will be able
         // to access external value information which otherwise would be
         // unavailable.
         '#delta' => $delta,
-
         '#attached' => array(
           'css' => array(drupal_get_path('module', 'colorfield') . '/colorfield.css'),
         ),
@@ -365,7 +394,7 @@ function colorfield_3text_validate($element, &$form_state) {
         return;
       }
       // If they gave us anything that's not hex, reject it.
-      if ( (strlen($values[$colorfield]) != 2) || $colorfield_value < 0 || $colorfield_value > 255) {
+      if ((strlen($values[$colorfield]) != 2) || $colorfield_value < 0 || $colorfield_value > 255) {
         form_error($element[$colorfield], t("Saturation value must be a 2-digit hexadecimal value between 00 and ff."));
       }
     }
