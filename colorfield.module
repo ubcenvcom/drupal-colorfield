@@ -89,6 +89,18 @@ function colorfield_field_is_empty($item, $field) {
  */
 function colorfield_field_formatter_info() {
   return array(
+    // This formatter displays the raw value of the color.
+    'colorfield_raw_rgb' => array(
+      'label' => t('Display the raw RGB value'),
+      'field types' => array('colorfield_rgb'),
+      'settings' => array('display_hash' => TRUE),
+    ),
+    // This formatter displays a DIV of the specified color
+    'colorfield_color_swatch' => array(
+      'label' => t('Display a simple block in the appropriate color'),
+      'field types' => array('colorfield_rgb'),
+      'settings' => array('width' => 20, 'height' => 20),
+    ),
     // This formatter just displays the hex value in the color indicated.
     'colorfield_simple_text' => array(
       'label' => t('Simple text-based formatter'),
@@ -99,12 +111,6 @@ function colorfield_field_formatter_info() {
     'colorfield_color_background' => array(
       'label' => t('Change the background of the output text'),
       'field types' => array('colorfield_rgb'),
-    ),
-    // This formatter displays a DIV of the specified color
-    'colorfield_color_swatch' => array(
-      'label' => t('Display a simple block in the appropriate color'),
-      'field types' => array('colorfield_rgb'),
-      'settings' => array('width' => 20, 'height' => 20),
     ),
   );
 }
@@ -127,7 +133,7 @@ function colorfield_field_formatter_settings_form($field, $instance, $view_mode,
     );
   }
   // Expose the the block width and height.
-  if ($display['type'] == 'colorfield_color_swatch') {
+  else if ($display['type'] == 'colorfield_color_swatch') {
     $element['width'] = array(
       '#type' => 'textfield',
       '#title' => t('Width of the block'),
@@ -146,6 +152,13 @@ function colorfield_field_formatter_settings_form($field, $instance, $view_mode,
       '#default_value' => $settings['height'],
     );
   }
+  else if ($display['type'] == 'colorfield_raw_rgb') {
+    $element['display_hash'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Display the # in the output of the color'),
+      '#default_value' => $settings['display_hash'],
+    );
+  }
 
   return $element;
 }
@@ -159,7 +172,7 @@ function colorfield_field_formatter_settings_summary($field, $instance, $view_mo
 
   $summary = array();
 
-  // Display the dynamic message and replace @code by the value of the color
+  // Displays the dynamic message and replace @code by the value of the color
   // code if it exists in the message.
   if ($display['type'] == 'colorfield_simple_text') {
     $summary[] = t('Message displayed: %message', array('%message' => $settings['message']));
@@ -167,12 +180,14 @@ function colorfield_field_formatter_settings_summary($field, $instance, $view_mo
       $summary[] = '<small>' . t('Note that @code will be replaced by the color picked.') . '</small>';
     }
   }
-  // Display the width & height of the block as summary.
-  else {
-    if ($display['type'] == 'colorfield_color_swatch') {
-      $summary[] = t('Width: @width px', array('@width' => $settings['width']));
-      $summary[] = t('Height: @height px', array('@height' => $settings['height']));
-    }
+  // Displays the width & height of the block as summary.
+  else if ($display['type'] == 'colorfield_color_swatch') {
+    $summary[] = t('Width: @width px', array('@width' => $settings['width']));
+    $summary[] = t('Height: @height px', array('@height' => $settings['height']));
+  }
+  // Displays if the hash is displayed or not.
+  else if ($display['type'] == 'colorfield_raw_rgb') {
+    $summary[] = ($settings['display_hash']) ? t('The raw will be prefixed with #') : t('The raw will not be prefixed with #');
   }
 
   return implode('<br />', $summary);
@@ -203,7 +218,14 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
         );
       }
       break;
-
+    // This formatter simply outputs the raw RGB value prefixed or not with
+    // the hash.
+    case 'colorfield_raw_rgb':
+      foreach ($items as $delta => $item) {
+        $color = ($display['settings']['display_hash'])? $item['rgb'] : substr($item['rgb'], 1);
+        $element[$delta] = array('#markup' => $color);
+      }
+      break;
     // This formatter adds css to the page changing the '.region-content' area's
     // background color. If there are many fields, the last one will win.
     case 'colorfield_color_background':
