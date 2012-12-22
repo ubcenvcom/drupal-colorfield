@@ -9,11 +9,11 @@
  */
 function colorfield_theme() {
   return array(
-    'colorfield_simple_text' => array(
+    'colorfield_colored_message' => array(
       'variables' => array(
         'text_color' => 'black', 'text_message' => '',
       ),
-      'template' => 'templates/colorfield-simpletext',
+      'template' => 'templates/colorfield-colored-message',
     ),
   );
 }
@@ -27,7 +27,7 @@ function colorfield_field_info() {
       'label' => t('Color'),
       'description' => t('A field composed of an RGB color.'),
       'default_widget' => 'colorfield_unified_textfield',
-      'default_formatter' => 'colorfield_simple_text',
+      'default_formatter' => 'colorfield_color_swatch',
       'instance_settings' => array(
         'colorfield_enable_colorpicker' => TRUE,
         'colorfield_colorpicker_type' => 'farbtastic'
@@ -38,22 +38,17 @@ function colorfield_field_info() {
 
 /**
  * Implements hook_field_validate().
- *
- * This hook gives us a chance to validate content that's in our
- * field. We're really only interested in the $items parameter, since
- * it holds arrays representing content in the field we've defined.
- * We want to verify that the items only contain RGB hex values like
- * this: #RRGGBB.
+ * Validates that the inputed value matchs a hexadecimal color.
  *
  * @see colorfield_field_widget_error()
  */
 function colorfield_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
   foreach ($items as $delta => $item) {
     if (!empty($item['rgb'])) {
-      if (!preg_match('@^#[:xdigit:]{6}$@i', $item['rgb'])) {
+      if (!preg_match('@^#[0-9a-f]{6}$@i', $item['rgb'])) {
         $errors[$field['field_name']][$langcode][$delta][] = array(
           'error' => 'colorfield_invalid',
-          'message' => t('Color must be in the HTML format #abcdef.'),
+          'message' => t('Color must be a hexadecimal value (eg: #84CCAF).'),
         );
       }
     }
@@ -63,9 +58,7 @@ function colorfield_field_validate($entity_type, $entity, $field, $instance, $la
 /**
  * Implements hook_field_is_empty().
  *
- * hook_field_is_emtpy() is where Drupal asks us if this field is empty.
- * Return TRUE if it does not contain data, FALSE if it does. This lets
- * the form API flag an error when required fields are empty.
+ * Use a regular empty() call to check if the field has any value.
  */
 function colorfield_field_is_empty($item, $field) {
   return empty($item['rgb']);
@@ -73,12 +66,6 @@ function colorfield_field_is_empty($item, $field) {
 
 /**
  * Implements hook_field_formatter_info().
- *
- * We need to tell Drupal that we have two different types of formatters
- * for this field. One will change the text color, and the other will
- * change the background color.
- *
- * @see colorfield_field_formatter_view()
  */
 function colorfield_field_formatter_info() {
   return array(
@@ -94,8 +81,8 @@ function colorfield_field_formatter_info() {
       'field types' => array('colorfield'),
       'settings' => array('width' => 20, 'height' => 20),
     ),
-    // This formatter just displays the hex value in the color indicated.
-    'colorfield_simple_text' => array(
+    // This formatter displays a message colored with the inputed value.
+    'colorfield_colored_message' => array(
       'label' => t('Colored message'),
       'field types' => array('colorfield'),
       'settings' => array('message' => t('The color code in this field is @code')),
@@ -112,7 +99,7 @@ function colorfield_field_formatter_settings_form($field, $instance, $view_mode,
   $settings = $display['settings'];
 
   // Expose the message to display as a setting.
-  if ($display['type'] == 'colorfield_simple_text') {
+  if ($display['type'] == 'colorfield_colored_message') {
     $element['message'] = array(
       '#type' => 'textfield',
       '#title' => t('Message to display'),
@@ -140,6 +127,7 @@ function colorfield_field_formatter_settings_form($field, $instance, $view_mode,
       '#default_value' => $settings['height'],
     );
   }
+  // Let the user decide either or not display the # as a prefix of the value.
   else if ($display['type'] == 'colorfield_raw_rgb') {
     $element['display_hash'] = array(
       '#type' => 'checkbox',
@@ -160,9 +148,9 @@ function colorfield_field_formatter_settings_summary($field, $instance, $view_mo
 
   $summary = array();
 
-  // Displays the dynamic message and replace @code by the value of the color
+  // Displays a dynamic message and replace @code by the value of the color
   // code if it exists in the message.
-  if ($display['type'] == 'colorfield_simple_text') {
+  if ($display['type'] == 'colorfield_colored_message') {
     $summary[] = t('Message displayed: %message', array('%message' => $settings['message']));
     if (strpos($settings['message'], '@code')) {
       $summary[] = '<small>' . t('Note that @code will be replaced by the color picked.') . '</small>';
@@ -184,11 +172,14 @@ function colorfield_field_formatter_settings_summary($field, $instance, $view_mo
 /**
  * Implements hook_field_formatter_view().
  *
- * Two formatters are implemented.
- * - colorfield_simple_text just outputs markup indicating the color that
- *   was entered and uses an inline style to set the text color to that value.
- * - colorfield_color_background does the same but also changes the
- *   background color of div.region-content.
+ * Three formatters are implemented:
+ * - colorfield_colored_message outputs a configurable message in the color
+ *   filled by the user, the user can use @code in the message to display
+ *   the value of the color.
+ * - colorfield_raw_rgb displays the raw value of the color, can be used
+ *   to insert the colors in views for instance.
+ * - colorfield_color_swatch displays a swatch of the configured color, the
+ *   size of the swatch is configurable.
  *
  * @see colorfield_field_formatter_info()
  */
@@ -197,10 +188,10 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
 
   switch ($display['type']) {
     // This formatter simply outputs the field as text and with a color.
-    case 'colorfield_simple_text':
+    case 'colorfield_colored_message':
       foreach ($items as $delta => $item) {
         $element[$delta] = array(
-          '#theme' => 'colorfield_simple_text',
+          '#theme' => 'colorfield_colored_message',
           '#text_color' => $item['rgb'],
           '#text_message' => t($display['settings']['message'], array('@code' => $item['rgb'])),
         );
@@ -217,6 +208,7 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
     // Adds an empty DIV, the background of which uses the selected colour.
     // Could be used, for example, to display a swatch of the color.
     case 'colorfield_color_swatch':
+      dsm('la');
       foreach ($items as $delta => $item) {
         $element[$delta] = array(
           '#type' => 'html_tag',
@@ -236,16 +228,12 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
 /**
  * Implements hook_field_widget_info().
  *
- * Three widgets are provided.
- * - A simple text-only widget where the user enters the '#ffffff'.
- * - A 3-textfield widget that gathers the red, green, and blue values
- *   separately.
- * - A farbtastic colorpicker widget that chooses the value graphically.
- *
- * These widget types will eventually show up in hook_field_widget_form,
- * where we will have to flesh them out.
- *
- * @see colorfield_field_widget_form()
+ * Two widgets are provided:
+ * - colorfield_unified_textfield lets the user input a color code in
+ *   hexadecimal, the user can do it with a selectable color picker
+ *   (farbtastic or minicolors for instance).
+ * - colorfield_split_textfield exposes three textfields to the user, one for
+ *   each color component (red, green and blue).
  */
 function colorfield_field_widget_info() {
   return array(
@@ -262,28 +250,13 @@ function colorfield_field_widget_info() {
 
 /**
  * Implements hook_field_widget_form().
- *
- * hook_widget_form() is where Drupal tells us to create form elements for
- * our field's widget.
- *
- * We provide one of three different forms, depending on the widget type of
- * the Form API item provided.
- *
- * The 'colorfield_colorpicker' and 'colorfield_text' are essentially
- * the same, but colorfield_colorpicker adds a javascript colorpicker
- * helper.
- *
- * colorfield_split_textfield displays three text fields, one each for red, green,
- * and blue. However, the field type defines a single text column,
- * rgb, which needs an HTML color spec. Define an element validate
- * handler that converts our r, g, and b fields into a simulated single
- * 'rgb' form element.
  */
 function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $value = isset($items[$delta]['rgb']) ? $items[$delta]['rgb'] : '';
   $widget = $element;
 
   $widget['#delta'] = $delta;
+  // @TODO: review this portion.
   switch ($instance['widget']['type']) {
     case 'colorfield_unified_textfield':
       $widget += array(
@@ -435,23 +408,5 @@ function colorfield_split_textfield_validate($element, &$form_state) {
 
     $value = sprintf('#%02s%02s%02s', $values['r'], $values['g'], $values['b']);
     form_set_value($element, $value, $form_state);
-  }
-}
-
-/**
- * Implements hook_field_widget_error().
- *
- * hook_field_widget_error() lets us figure out what to do with errors
- * we might have generated in hook_field_validate(). Generally, we'll just
- * call form_error().
- *
- * @see colorfield_field_validate()
- * @see form_error()
- */
-function colorfield_field_widget_error($element, $error, $form, &$form_state) {
-  switch ($error['error']) {
-    case 'colorfield_invalid':
-      form_error($element, $error['message']);
-      break;
   }
 }
