@@ -10,7 +10,7 @@
  */
 function colorfield_theme() {
   return array(
-    'colorfield_simpletext' => array(
+    'colorfield_simple_text' => array(
       'variables' => array(
         'text_color' => 'black', 'text_message' => '',
       ),
@@ -32,12 +32,12 @@ function colorfield_theme() {
 function colorfield_field_info() {
   return array(
     // We name our field as the associative name of the array.
-    'colorfield_rgb' => array(
-      'label' => t('Color Picker (RGB)'),
+    'colorfield' => array(
+      'label' => t('Color'),
       'description' => t('A field composed of an RGB color.'),
-      'default_widget' => 'colorfield_text',
+      'default_widget' => 'colorfield_unified_textfield',
       'default_formatter' => 'colorfield_simple_text',
-      'instance_settings' => array('text_processing' => 0),
+      'instance_settings' => array('colorfield_enable_colorpicker' => TRUE, 'colorfield_colorpicker_type' => 'farbtastic'),
     ),
   );
 }
@@ -92,25 +92,25 @@ function colorfield_field_formatter_info() {
     // This formatter displays the raw value of the color.
     'colorfield_raw_rgb' => array(
       'label' => t('Raw RGB value'),
-      'field types' => array('colorfield_rgb'),
+      'field types' => array('colorfield'),
       'settings' => array('display_hash' => TRUE),
     ),
     // This formatter displays a DIV of the specified color
     'colorfield_color_swatch' => array(
       'label' => t('Color swatch'),
-      'field types' => array('colorfield_rgb'),
+      'field types' => array('colorfield'),
       'settings' => array('width' => 20, 'height' => 20),
     ),
     // This formatter just displays the hex value in the color indicated.
     'colorfield_simple_text' => array(
       'label' => t('Simple text-based formatter'),
-      'field types' => array('colorfield_rgb'),
+      'field types' => array('colorfield'),
       'settings' => array('message' => t('The color code in this field is @code')),
     ),
     // This formatter changes the background color of the content region.
     'colorfield_color_background' => array(
       'label' => t('Background of the output text'),
-      'field types' => array('colorfield_rgb'),
+      'field types' => array('colorfield'),
     ),
   );
 }
@@ -212,7 +212,7 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
     case 'colorfield_simple_text':
       foreach ($items as $delta => $item) {
         $element[$delta] = array(
-          '#theme' => 'colorfield_simpletext',
+          '#theme' => 'colorfield_simple_text',
           '#text_color' => $item['rgb'],
           '#text_message' => t($display['settings']['message'], array('@code' => $item['rgb'])),
         );
@@ -280,13 +280,13 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
  */
 function colorfield_field_widget_info() {
   return array(
-    'colorfield_text' => array(
-      'label' => t('RGB value as #ffffff'),
-      'field types' => array('colorfield_rgb'),
+    'colorfield_unified_textfield' => array(
+      'label' => t('Color code (eg: #FFAA77)'),
+      'field types' => array('colorfield'),
     ),
-    'colorfield_3text' => array(
-      'label' => t('RGB text field'),
-      'field types' => array('colorfield_rgb'),
+    'colorfield_split_textfield' => array(
+      'label' => t('Split Red, Green and Blue text fields'),
+      'field types' => array('colorfield'),
     ),
   );
 }
@@ -304,7 +304,7 @@ function colorfield_field_widget_info() {
  * the same, but colorfield_colorpicker adds a javascript colorpicker
  * helper.
  *
- * colorfield_3text displays three text fields, one each for red, green,
+ * colorfield_split_textfield displays three text fields, one each for red, green,
  * and blue. However, the field type defines a single text column,
  * rgb, which needs an HTML color spec. Define an element validate
  * handler that converts our r, g, and b fields into a simulated single
@@ -316,15 +316,15 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
 
   $widget['#delta'] = $delta;
   switch ($instance['widget']['type']) {
-    case 'colorfield_text':
+    case 'colorfield_unified_textfield':
       $widget += array(
-        '#type' => 'textfield',
-        '#default_value' => $value,
-        '#size' => 7,
-        '#maxlength' => 7,
-      );
-      if ($instance['widget']['settings']['colorfield_options']['enable_colorpicker']) {
-        $attached_js = _colorfield_get_attached_js($instance['widget']['settings']);
+      '#type' => 'textfield',
+      '#default_value' => $value,
+      '#size' => 7,
+      '#maxlength' => 7,
+    );
+      if ($instance['settings']['colorfield_enable_colorpicker']) {
+        $attached_js = _colorfield_get_attached_js($instance['settings']);
         $widget += array(
           '#suffix' => '<div class="colorfield-picker"></div>',
           '#attributes' => array('class' => array('colorfield-colorpicker')),
@@ -333,7 +333,7 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
       }
       break;
 
-    case 'colorfield_3text':
+    case 'colorfield_split_textfield':
       // Convert rgb value into r, g, and b for #default_value.
       if (!empty($value)) {
         preg_match_all('@..@', substr($value, 1), $match);
@@ -345,7 +345,7 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
       // Make this a fieldset with the three text fields.
       $widget += array(
         '#type' => 'fieldset',
-        '#element_validate' => array('colorfield_3text_validate'),
+        '#element_validate' => array('colorfield_split_textfield_validate'),
         // #delta is set so that the validation function will be able
         // to access external value information which otherwise would be
         // unavailable.
@@ -380,7 +380,7 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
  */
 function _colorfield_get_attached_js($settings) {
   $attached_js = array();
-  switch ($settings['colorfield_options']['colorpicker_type']) {
+  switch ($settings['colorfield_colorpicker_type']) {
     case 'farbtastic':
       // Add Farbtastic color picker and attach its behavior.
       $attached_js = array(
@@ -405,18 +405,17 @@ function _colorfield_get_attached_js($settings) {
  */
 function colorfield_field_widget_settings_form($field, $instance) {
   $widget = $instance['widget'];
-  $settings = $widget['settings'];
-
-  if ($widget['type'] == 'colorfield_text') {
+  $settings = $instance['settings'];
+  if ($widget['type'] == 'colorfield_unified_textfield') {
     $form['colorfield_options'] = array(
       '#type' => 'fieldset',
       '#title' => t('Color selection options'),
     );
-    $form['colorfield_options']['enable_colorpicker'] = array(
+    $form['colorfield_options']['colorfield_enable_colorpicker'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enable the color picker.'),
       '#description' => t('If you enable this option the user will be able to select a color via a user friendly widget.'),
-      '#default_value' => isset($settings['colorfield_options']['enable_colorpicker'])? $settings['colorfield_options']['enable_colorpicker'] : FALSE,
+      '#default_value' => $settings['colorfield_enable_colorpicker'],
     );
     $form['colorfield_options']['colorpicker_type'] = array(
       '#type' => 'select',
@@ -426,14 +425,12 @@ function colorfield_field_widget_settings_form($field, $instance) {
       ),
       '#states' => array(
         'invisible' => array(
-          'input[name="instance[widget][settings][colorfield_options][enable_colorpicker]"]' => array('checked' => FALSE),
+          'input[name="instance[widget][settings][colorfield_options][colorfield_enable_colorpicker]"]' => array('checked' => FALSE),
         ),
       ),
-      // @TODO: set the link for minicolors.
-      '#description' => t('If you are using jQuery 1.7 or a more recent version (via jQuery update), you will expose the !minicolor_link color picker.', array('!minicolor_link' => l('minicolor', 'http://minicolor.org'))),
-      '#default_value' => isset($settings['colorfield_options']['colorpicker_type']) ? $settings['colorfield_options']['colorpicker_type'] : 'farbtastic',
+      '#description' => t('If you are using jQuery 1.7 or a more recent version (via jQuery update), you will expose the !minicolor_link color picker.', array('!minicolor_link' => l('minicolor', 'https://github.com/claviska/jquery-miniColors'))),
+      '#default_value' => $settings['colorfield_colorpicker_type'],
     );
-    // @TODO: change the test.
     if (module_exists('jquery_update')) {
       $form['colorfield_options']['colorpicker_type']['#options']['minicolors'] = t('Minicolors');
       // If jQuery update is here, no need to suggest to the user to get it.
@@ -448,7 +445,7 @@ function colorfield_field_widget_settings_form($field, $instance) {
  * Validate the individual fields and then convert them into a single HTML RGB
  * value as text.
  */
-function colorfield_3text_validate($element, &$form_state) {
+function colorfield_split_textfield_validate($element, &$form_state) {
   $delta = $element['#delta']; // TODO: Isn't there a better way to find out which element?
   $field = $form_state['field'][$element['#field_name']][$element['#language']]['field'];
   $field_name = $field['field_name'];
