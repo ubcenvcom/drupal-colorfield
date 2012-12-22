@@ -1,8 +1,7 @@
 <?php
 /**
  * @file
- * A simple color field module - with picker - based closely on the module
- * in Examples.
+ * A simple color field module with a color picker.
  */
 
 /**
@@ -19,25 +18,20 @@ function colorfield_theme() {
   );
 }
 
-
-/***************************************************************
- * Field Type API hooks
- ***************************************************************/
-
 /**
  * Implements hook_field_info().
- *
- * Provides the description of the field.
  */
 function colorfield_field_info() {
   return array(
-    // We name our field as the associative name of the array.
     'colorfield' => array(
       'label' => t('Color'),
       'description' => t('A field composed of an RGB color.'),
       'default_widget' => 'colorfield_unified_textfield',
       'default_formatter' => 'colorfield_simple_text',
-      'instance_settings' => array('colorfield_enable_colorpicker' => TRUE, 'colorfield_colorpicker_type' => 'farbtastic'),
+      'instance_settings' => array(
+        'colorfield_enable_colorpicker' => TRUE,
+        'colorfield_colorpicker_type' => 'farbtastic'
+      ),
     ),
   );
 }
@@ -49,15 +43,14 @@ function colorfield_field_info() {
  * field. We're really only interested in the $items parameter, since
  * it holds arrays representing content in the field we've defined.
  * We want to verify that the items only contain RGB hex values like
- * this: #RRGGBB. If the item validates, we do nothing. If it doesn't
- * validate, we add our own error notification to the $errors parameter.
+ * this: #RRGGBB.
  *
  * @see colorfield_field_widget_error()
  */
 function colorfield_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
   foreach ($items as $delta => $item) {
     if (!empty($item['rgb'])) {
-      if (!preg_match('@^#[0-9a-fA-F]{6}$@', $item['rgb'])) {
+      if (!preg_match('@^#[:xdigit:]{6}$@i', $item['rgb'])) {
         $errors[$field['field_name']][$langcode][$delta][] = array(
           'error' => 'colorfield_invalid',
           'message' => t('Color must be in the HTML format #abcdef.'),
@@ -103,14 +96,9 @@ function colorfield_field_formatter_info() {
     ),
     // This formatter just displays the hex value in the color indicated.
     'colorfield_simple_text' => array(
-      'label' => t('Simple text-based formatter'),
+      'label' => t('Colored message'),
       'field types' => array('colorfield'),
       'settings' => array('message' => t('The color code in this field is @code')),
-    ),
-    // This formatter changes the background color of the content region.
-    'colorfield_color_background' => array(
-      'label' => t('Background of the output text'),
-      'field types' => array('colorfield'),
     ),
   );
 }
@@ -224,25 +212,6 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
       foreach ($items as $delta => $item) {
         $color = ($display['settings']['display_hash'])? $item['rgb'] : substr($item['rgb'], 1);
         $element[$delta] = array('#markup' => $color);
-      }
-      break;
-    // This formatter adds css to the page changing the '.region-content' area's
-    // background color. If there are many fields, the last one will win.
-    case 'colorfield_color_background':
-      foreach ($items as $delta => $item) {
-        $element[$delta] = array(
-          '#type' => 'html_tag',
-          '#tag' => 'p',
-          '#value' => t('The content area color has been changed to @code', array('@code' => $item['rgb'])),
-          '#attached' => array(
-            'css' => array(
-              array(
-                'data' => 'div.region-content { background-color:' . $item['rgb'] . ';}',
-                'type' => 'inline',
-              ),
-            ),
-          ),
-        );
       }
       break;
     // Adds an empty DIV, the background of which uses the selected colour.
