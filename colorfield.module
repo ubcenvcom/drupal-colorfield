@@ -312,33 +312,23 @@ function colorfield_field_widget_info() {
  */
 function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $value = isset($items[$delta]['rgb']) ? $items[$delta]['rgb'] : '';
-
   $widget = $element;
+
   $widget['#delta'] = $delta;
   switch ($instance['widget']['type']) {
     case 'colorfield_text':
       $widget += array(
         '#type' => 'textfield',
         '#default_value' => $value,
-        // Allow a slightly larger size that the field length to allow for some
-        // configurations where all characters won't fit in input field.
         '#size' => 7,
         '#maxlength' => 7,
       );
-      if ($instance['widget']['settings']['enable_colorpicker']) {
+      if ($instance['widget']['settings']['colorfield_options']['enable_colorpicker']) {
+        $attached_js = _colorfield_get_attached_js($instance['widget']['settings']);
         $widget += array(
           '#suffix' => '<div class="colorfield-picker"></div>',
           '#attributes' => array('class' => array('colorfield-colorpicker')),
-          '#attached' => array(
-            // Add Farbtastic color picker.
-            'library' => array(
-              array('system', 'farbtastic'),
-            ),
-            // Add javascript to trigger the colorpicker.
-            'js' => array(
-              drupal_get_path('module', 'colorfield') . '/lib/js/colorfield-farbtastic.js',
-            ),
-          ),
+          '#attached' => $attached_js,
         );
       }
       break;
@@ -359,6 +349,7 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
         // #delta is set so that the validation function will be able
         // to access external value information which otherwise would be
         // unavailable.
+        // @TODO: is the CSS file required?
         '#delta' => $delta,
         '#attached' => array(
           'css' => array(drupal_get_path('module', 'colorfield') . '/colorfield.css'),
@@ -379,9 +370,34 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
       break;
 
   }
-
   $element['rgb'] = $widget;
   return $element;
+}
+
+/**
+ * Helper to get the right data to return in the #attached property of our
+ * color picker.
+ */
+function _colorfield_get_attached_js($settings) {
+  $attached_js = array();
+  switch ($settings['colorfield_options']['colorpicker_type']) {
+    case 'farbtastic':
+      // Add Farbtastic color picker and attach its behavior.
+      $attached_js = array(
+        'library' => array(array('system', 'farbtastic')),
+        'js' => array(drupal_get_path('module', 'colorfield') . '/js/colorfield-farbtastic.js'),
+      );
+      break;
+    case 'minicolors':
+      // Add minicolors library and attach its behavior.
+      // @TODO: finish this.
+      $attached_js = array(
+        'library' => array(array('colorfield', 'minicolors')),
+        'js' => array(drupal_get_path('module', 'colorfield') . '/js/colorfield-minicolors.js'),
+      );
+      break;
+  }
+  return $attached_js;
 }
 
 /**
@@ -392,13 +408,38 @@ function colorfield_field_widget_settings_form($field, $instance) {
   $settings = $widget['settings'];
 
   if ($widget['type'] == 'colorfield_text') {
-    $form['enable_colorpicker'] = array(
+    $form['colorfield_options'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Color selection options'),
+    );
+    $form['colorfield_options']['enable_colorpicker'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enable the color picker.'),
-      '#default_value' => isset($settings['enable_colorpicker'])? $settings['enable_colorpicker'] : FALSE,
+      '#description' => t('If you enable this option the user will be able to select a color via a user friendly widget.'),
+      '#default_value' => isset($settings['colorfield_options']['enable_colorpicker'])? $settings['colorfield_options']['enable_colorpicker'] : FALSE,
     );
+    $form['colorfield_options']['colorpicker_type'] = array(
+      '#type' => 'select',
+      '#title' => t('Select the color picker'),
+      '#options' => array(
+        'farbtastic' => t('Farbtastic'),
+      ),
+      '#states' => array(
+        'invisible' => array(
+          'input[name="instance[widget][settings][colorfield_options][enable_colorpicker]"]' => array('checked' => FALSE),
+        ),
+      ),
+      // @TODO: set the link for minicolors.
+      '#description' => t('If you are using jQuery 1.7 or a more recent version (via jQuery update), you will expose the !minicolor_link color picker.', array('!minicolor_link' => l('minicolor', 'http://minicolor.org'))),
+      '#default_value' => isset($settings['colorfield_options']['colorpicker_type']) ? $settings['colorfield_options']['colorpicker_type'] : 'farbtastic',
+    );
+    // @TODO: change the test.
+    if (module_exists('jquery_update')) {
+      $form['colorfield_options']['colorpicker_type']['#options']['minicolors'] = t('Minicolors');
+      // If jQuery update is here, no need to suggest to the user to get it.
+      $form['colorfield_options']['colorpicker_type']['#description'] = '';
+    }
   }
-
   return $form;
 }
 

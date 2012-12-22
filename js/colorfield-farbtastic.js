@@ -7,7 +7,7 @@
  * Provides a farbtastic colorpicker for the widget.
  */
 (function ($) {
-  Drupal.behaviors.field_example_colorpicker = {
+  Drupal.behaviors.colorfield = {
     attach: function (context) {
       // Display the current value as background if the field has one.
       $(".colorfield-colorpicker", context)
