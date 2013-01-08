@@ -1,4 +1,4 @@
-name = Color Fields
-description = A color field for attaching colors to entities
-package = Miscellaneous
+name = Colorfield
+description = Exposes a color field type to store colors as hexadecimal values.
+package = Colorfield
 core = 7.x

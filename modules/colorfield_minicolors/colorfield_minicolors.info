@@ -1,0 +1,6 @@
+name = jQuery Minicolors colorpicker
+description = Adds the jQuery Minicolors color picker for colorfield field type.
+package = Colorfield
+core = 7.x
+
+dependency[] = jquery_update

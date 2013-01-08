@@ -1,0 +1,94 @@
+<?php
+/**
+ * @file
+ * A simple color field module with a color picker.
+ */
+
+function colorfield_minicolors_form_field_ui_field_edit_form_alter(&$form, $form_state) {
+  if ($form['#field']['type'] == 'colorfield' && $form['#instance']['widget']['type'] == 'colorfield_unified_textfield') {
+    $form['instance']['widget']['settings']['colorfield_options']['colorfield_colorpicker_type']['#options']['minicolors'] = t('Minicolors');
+    // If jQuery update is here, no need to suggest to the user to get it.
+    $form['instance']['widget']['settings']['colorfield_options']['colorfield_colorpicker_type']['#description'] = '';
+  }
+
+  dsm(func_get_args());
+}
+
+/**
+ * Implements hook_theme().
+ */
+function colorfield_minicolors_theme() {
+  return array(
+    'minicolors' => array(
+      'render element' => 'element',
+    ),
+  );
+}
+
+function theme_minicolors($variables) {
+  $element = $variables['element'];
+  $element['#attributes']['type'] = 'minicolors';
+  element_set_attributes($element, array(
+    'id',
+    'name',
+    'value',
+    'size',
+    'maxlength'
+  ));
+  _form_set_class($element, array('form-text'));
+
+  $extra = '';
+//  if ($element['#autocomplete_path'] && drupal_valid_path($element['#autocomplete_path'])) {
+//    drupal_add_library('system', 'drupal.autocomplete');
+//    $element['#attributes']['class'][] = 'form-autocomplete';
+//
+//    $attributes = array();
+//    $attributes['type'] = 'hidden';
+//    $attributes['id'] = $element['#attributes']['id'] . '-autocomplete';
+//    $attributes['value'] = url($element['#autocomplete_path'], array('absolute' => TRUE));
+//    $attributes['disabled'] = 'disabled';
+//    $attributes['class'][] = 'autocomplete';
+//    $extra = '<input' . drupal_attributes($attributes) . ' />';
+//  }
+
+  $output = '<input' . drupal_attributes($element['#attributes']) . ' />';
+dsm($output, 'o');
+  return $output . $extra;
+}
+
+function colorfield_minicolors_field_widget_colorfield_unified_textfield_form_alter(&$element, &$form_state, $context) {
+//  dsm(func_get_args());
+  $settings = $context['instance']['widget']['settings'];
+  if ($settings['colorfield_options']['colorfield_enable_colorpicker'] && $settings['colorfield_options']['colorfield_colorpicker_type'] == 'minicolors') {
+    dsm($element['rgb']);
+//    $element['rgb']['#type'] = 'minicolors';
+//    $element['rgb']['#theme'] = 'minicolors';
+    $element['rgb']['#attached'] = array(
+      'library' => array(array('colorfield_minicolors', 'minicolors')),
+      'js' => array(drupal_get_path('module', 'colorfield_minicolors') . '/js/colorfield-minicolors.js'),
+    );
+  }
+}
+
+function colorfield_minicolors_library() {
+  return array(
+    'minicolors' => array(
+      'title' => t('jQuery Minicolors'),
+      'website' => 'http://labs.abeautifulsite.net/jquery-miniColors/',
+      'version' => '2.0-beta',
+      'js' => array(
+        drupal_get_path('module', 'colorfield_minicolors') . '/lib/jquery.miniColors.js' => array('group' => JS_LIBRARY),
+      ),
+      'css' => array(
+        drupal_get_path('module', 'colorfield_minicolors') . '/lib/jquery.miniColors.css' => array(
+          'type' => 'file',
+          'media' => 'screen',
+        ),
+      ),
+      'dependencies' => array(
+        // Require jQuery UI core by System module.
+        array('system', 'jquery'),
+      ),
+    ),
+  );
+}
