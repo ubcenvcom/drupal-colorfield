@@ -14,4 +14,3 @@ formatters are existing:
 * Displaying the raw RGB value (may be useful for views integration).
 * Displaying a color swatch, the size of the swatch is configurable.
 * Displaying a colored message (eg: Illustrate the color filled by the user).
-

@@ -43,25 +43,65 @@ function colorfield_field_info() {
  * @see colorfield_field_widget_error()
  */
 function colorfield_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
-  foreach ($items as $delta => $item) {
-    if (!empty($item['rgb'])) {
-      if (!preg_match('@^#[0-9a-f]{6}$@i', $item['rgb'])) {
-        $errors[$field['field_name']][$langcode][$delta][] = array(
-          'error' => 'colorfield_invalid',
-          'message' => t('Color must be a hexadecimal value (eg: #84CCAF).'),
-        );
+  // Remove potential empty fields.
+  $items = _field_filter_items($field, $items);
+
+  if ($instance['widget']['type'] == 'colorfield_unified_textfield') {
+    foreach ($items as $delta => $item) {
+      if (!empty($item['rgb'])) {
+        // Double check that we really have an hexadecimal value.
+        if (!preg_match('@^#[0-9a-f]{6}$@i', $item['rgb'])) {
+          $errors[$field['field_name']][$langcode][$delta][] = array(
+            'error' => 'colorfield_invalid',
+            'message' => t('Color must be a hexadecimal value (eg: #84CCAF).'),
+          );
+        }
+      }
+    }
+  }
+  else if ($instance['widget']['type'] == 'colorfield_split_textfield') {
+    foreach ($items as $delta => $item) {
+      foreach ($item['rgb'] as $key => $color_component) {
+        // Check if every color component is a valid hexadecimal value.
+        if (!preg_match('@^[0-9a-f]{2}$@i', $color_component)) {
+          $errors[$field['field_name']][$langcode][$delta]['rgb'][$key] = array(
+            'error' => 'colorfield_invalid_component_value',
+            'message' => t('%name: the color component you specified is not valid, you must use a hexadecimal value (eg: 00, 5D, FF...).', array(
+              '%name' => $instance['label'],
+            )),
+          );
+        }
       }
     }
   }
 }
 
 /**
+ * Implements hook_field_attach_submit().
+ */
+function colorfield_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  // Rewrite the clean RGB value.
+  foreach ($items as $key => $item) {
+    $items[$key]['rgb'] = '#' . implode('', $item['rgb']);
+  }
+}
+
+/**
+ * Implements hook_field_widget_error().
+ */
+function colorfield_field_widget_error($element, $error, $form, &$form_state) {
+  // Mark components in error.
+  foreach ($error as $key => $error_element) {
+    form_error($element['rgb'][$key], $error_element['message']);
+  }
+}
+
+/**
  * Implements hook_field_is_empty().
- *
- * Use a regular empty() call to check if the field has any value.
  */
 function colorfield_field_is_empty($item, $field) {
-  return empty($item['rgb']);
+  // Detect if the field is empty (the three color components are empty).
+  return empty($item['rgb']['r']) && empty($item['rgb']['g']) && empty($item['rgb']['b']);
 }
 
 /**
@@ -251,12 +291,10 @@ function colorfield_field_widget_info() {
  * Implements hook_field_widget_form().
  */
 function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-  // @TODO rename rgb as colorfield.
   $value = isset($items[$delta]['rgb']) ? $items[$delta]['rgb'] : '';
   $widget = $element;
 
   $widget['#delta'] = $delta;
-  // @TODO: review this portion.
   switch ($instance['widget']['type']) {
     case 'colorfield_unified_textfield':
       $widget += array(
@@ -282,27 +320,35 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
       break;
 
     case 'colorfield_split_textfield':
-      // Convert rgb value into r, g, and b for #default_value.
-      if (!empty($value)) {
-        preg_match_all('@..@', substr($value, 1), $match);
+      // Extract each component of the color as an array key.
+      // If we don't have a valid color (#AAAAAA) initialize empty values.
+      if (strlen($value) == '7') {
+        $raw_value = substr($value, 1);
+        $color = array(
+          'r' => $raw_value{0} . $raw_value{1},
+          'g' => $raw_value{2} . $raw_value{3},
+          'b' => $raw_value{4} . $raw_value{5},
+        );
       }
       else {
-        $match = array(array());
+        $color = array(
+          'r' => '',
+          'g' => '',
+          'b' => '',
+        );
       }
 
       // Make this a fieldset with the three text fields.
       $widget += array(
         '#type' => 'fieldset',
-        '#element_validate' => array('colorfield_split_textfield_validate'),
-        // #delta is set so that the validation function will be able
-        // to access external value information which otherwise would be
-        // unavailable.
-        // @TODO: is the CSS file required?
-        '#delta' => $delta,
         '#attached' => array(
           'css' => array(drupal_get_path('module', 'colorfield') . '/styles/colorfield.css'),
         ),
+        '#suffix' => '<div class="clearfix"></div>',
+        '#attributes' => array('class' => array('colorfield-split-field')),
       );
+      $widget['#title'] = t('Select your color');
+      $widget['#description'] = '<p>' . t('The 2-digit hexadecimal representation of the color saturation, like "44", "C2" or "FF".') . '</p>';
 
       // Create a textfield for saturation values for Red, Green, and Blue.
       foreach (array('r' => t('Red'), 'g' => t('Green'), 'b' => t('Blue')) as $key => $title) {
@@ -310,13 +356,11 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
           '#type' => 'textfield',
           '#title' => $title,
           '#size' => 2,
-          '#default_value' => array_shift($match[0]),
-          '#attributes' => array('class' => array('rgb-entry')),
-          // '#description' => t('The 2-digit hexadecimal representation of the @color saturation, like "a1" or "ff"', array('@color' => $title)),
+          '#maxlength' => 2,
+          '#default_value' => $color[$key],
         );
       }
       break;
-
   }
   $element['rgb'] = $widget;
   return $element;
@@ -326,6 +370,7 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
  * Implements hook_field_widget_settings_form().
  */
 function colorfield_field_widget_settings_form($field, $instance) {
+  $form = array();
   $widget = $instance['widget'];
   $settings = $instance['settings'];
   if ($widget['type'] == 'colorfield_unified_textfield') {
@@ -357,33 +402,4 @@ function colorfield_field_widget_settings_form($field, $instance) {
     );
   }
   return $form;
-}
-
-
-/**
- * Validate the individual fields and then convert them into a single HTML RGB
- * value as text.
- */
-function colorfield_split_textfield_validate($element, &$form_state) {
-  $delta = $element['#delta']; // TODO: Isn't there a better way to find out which element?
-  $field = $form_state['field'][$element['#field_name']][$element['#language']]['field'];
-  $field_name = $field['field_name'];
-  if (isset($form_state['values'][$field_name][$element['#language']][$delta]['rgb'])) {
-    $values = $form_state['values'][$field_name][$element['#language']][$delta]['rgb'];
-    foreach (array('r', 'g', 'b') as $colorfield) {
-      $colorfield_value = hexdec($values[$colorfield]);
-      // If they left any empty, we'll set the value empty and quit.
-      if (strlen($values[$colorfield]) == 0) {
-        form_set_value($element, '', $form_state);
-        return;
-      }
-      // If they gave us anything that's not hex, reject it.
-      if ((strlen($values[$colorfield]) != 2) || $colorfield_value < 0 || $colorfield_value > 255) {
-        form_error($element[$colorfield], t("Saturation value must be a 2-digit hexadecimal value between 00 and ff."));
-      }
-    }
-
-    $value = sprintf('#%02s%02s%02s', $values['r'], $values['g'], $values['b']);
-    form_set_value($element, $value, $form_state);
-  }
 }

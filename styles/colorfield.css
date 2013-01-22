@@ -2,7 +2,12 @@
  * @file
  * CSS for Colorfield.
  */
-div.form-item table .form-type-textfield, 
-div.form-item table .form-type-textfield * {
+fieldset.colorfield-split-field div.form-item {
+  float: left;
+  margin-bottom: 10px;
+}
+.colorfield-split-field div.form-item label,
+.colorfield-split-field div.form-item input {
   display: inline-block;
+  margin: 0 5px 0 0;
 }
