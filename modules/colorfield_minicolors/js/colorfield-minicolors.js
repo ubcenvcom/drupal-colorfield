@@ -9,12 +9,10 @@
 (function ($) {
   Drupal.behaviors.colorfield_minicolors = {
     attach: function (context) {
-      console.log('hey');
-
       $(".colorfield-colorpicker", context).each(function () {
-        console.log($(this));
-        $(this).prop('type', 'minicolors');
-      })
+        $(this).minicolors();
+      });
+    }
 
 
 //
@@ -65,6 +63,5 @@
 //      .focusout(function () {
 //        $(".colorfield-picker").hide();
 //      });
-    }
   }
 })(jQuery);                                                                                                                     

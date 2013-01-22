@@ -59,7 +59,8 @@ dsm($output, 'o');
 function colorfield_minicolors_field_widget_colorfield_unified_textfield_form_alter(&$element, &$form_state, $context) {
 //  dsm(func_get_args());
   $settings = $context['instance']['widget']['settings'];
-  if ($settings['colorfield_options']['colorfield_enable_colorpicker'] && $settings['colorfield_options']['colorfield_colorpicker_type'] == 'minicolors') {
+//  dsm($settings);
+  if (isset($settings['colorfield_options']['colorfield_enable_colorpicker']) && $settings['colorfield_options']['colorfield_colorpicker_type'] == 'minicolors') {
     dsm($element['rgb']);
 //    $element['rgb']['#type'] = 'minicolors';
 //    $element['rgb']['#theme'] = 'minicolors';
@@ -75,12 +76,12 @@ function colorfield_minicolors_library() {
     'minicolors' => array(
       'title' => t('jQuery Minicolors'),
       'website' => 'http://labs.abeautifulsite.net/jquery-miniColors/',
-      'version' => '2.0-beta',
+      'version' => '2.0.0-beta3',
       'js' => array(
-        drupal_get_path('module', 'colorfield_minicolors') . '/lib/jquery.miniColors.js' => array('group' => JS_LIBRARY),
+        drupal_get_path('module', 'colorfield_minicolors') . '/lib/jquery.minicolors.js' => array('group' => JS_LIBRARY),
       ),
       'css' => array(
-        drupal_get_path('module', 'colorfield_minicolors') . '/lib/jquery.miniColors.css' => array(
+        drupal_get_path('module', 'colorfield_minicolors') . '/lib/jquery.minicolors.css' => array(
           'type' => 'file',
           'media' => 'screen',
         ),
