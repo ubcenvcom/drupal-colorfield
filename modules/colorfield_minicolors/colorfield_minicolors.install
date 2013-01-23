@@ -1,4 +1,9 @@
 <?php
+/**
+ * @file
+ * Installation file for the submodule colorfield minicolors module.
+ * It checks if the minimum requirements are respected.
+ */
 
 /**
  * Implements hook_requirements().
@@ -18,7 +23,7 @@ function colorfield_minicolors_requirements($phase) {
       );
     }
   }
-  else if ($phase == 'runtime') {
+  elseif ($phase == 'runtime') {
     $jquery = drupal_get_library('system', 'jquery');
     if (!version_compare($jquery['version'], '1.7.1', '>=')) {
       return array(
