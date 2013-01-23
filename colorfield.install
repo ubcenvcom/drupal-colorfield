@@ -9,7 +9,6 @@
  *
  * The data we will store here is just one 7 characters element, even
  * though the widget presents the three portions separately.
- *
  */
 function colorfield_field_schema($field) {
   $columns = array(

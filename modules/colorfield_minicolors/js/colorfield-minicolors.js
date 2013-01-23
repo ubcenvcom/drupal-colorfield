@@ -10,8 +10,11 @@
   Drupal.behaviors.colorfield_minicolors = {
     attach: function (context) {
       $(".colorfield-colorpicker", context).each(function () {
-        $(this).minicolors();
+        settings = {
+          animationSpeed: 0
+        }
+        $(this).minicolors(settings);
       });
     }
   }
-})(jQuery);                                                                                                                     
+})(jQuery);

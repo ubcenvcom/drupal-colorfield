@@ -30,7 +30,7 @@ function colorfield_field_info() {
       'default_formatter' => 'colorfield_color_swatch',
       'instance_settings' => array(
         'colorfield_enable_colorpicker' => TRUE,
-        'colorfield_colorpicker_type' => 'farbtastic'
+        'colorfield_colorpicker_type' => 'farbtastic',
       ),
     ),
   );
@@ -38,6 +38,7 @@ function colorfield_field_info() {
 
 /**
  * Implements hook_field_validate().
+ *
  * Validates that the inputed value matchs a hexadecimal color.
  *
  * @see colorfield_field_widget_error()
@@ -59,16 +60,14 @@ function colorfield_field_validate($entity_type, $entity, $field, $instance, $la
       }
     }
   }
-  else if ($instance['widget']['type'] == 'colorfield_split_textfield') {
+  elseif ($instance['widget']['type'] == 'colorfield_split_textfield') {
     foreach ($items as $delta => $item) {
       foreach ($item['rgb'] as $key => $color_component) {
         // Check if every color component is a valid hexadecimal value.
         if (!preg_match('@^[0-9a-f]{2}$@i', $color_component)) {
           $errors[$field['field_name']][$langcode][$delta]['rgb'][$key] = array(
             'error' => 'colorfield_invalid_component_value',
-            'message' => t('%name: the color component you specified is not valid, you must use a hexadecimal value (eg: 00, 5D, FF...).', array(
-              '%name' => $instance['label'],
-            )),
+            'message' => t('%name: the color component you specified is not valid, you must use a hexadecimal value (eg: 00, 5D, FF...).', array('%name' => $instance['label'])),
           );
         }
       }
@@ -115,7 +114,7 @@ function colorfield_field_formatter_info() {
       'field types' => array('colorfield'),
       'settings' => array('display_hash' => TRUE),
     ),
-    // This formatter displays a DIV of the specified color
+    // This formatter displays a DIV of the specified color.
     'colorfield_color_swatch' => array(
       'label' => t('Color swatch'),
       'field types' => array('colorfield'),
@@ -148,7 +147,7 @@ function colorfield_field_formatter_settings_form($field, $instance, $view_mode,
     );
   }
   // Expose the the block width and height.
-  else if ($display['type'] == 'colorfield_color_swatch') {
+  elseif ($display['type'] == 'colorfield_color_swatch') {
     $element['width'] = array(
       '#type' => 'textfield',
       '#title' => t('Width of the block'),
@@ -168,7 +167,7 @@ function colorfield_field_formatter_settings_form($field, $instance, $view_mode,
     );
   }
   // Let the user decide either or not display the # as a prefix of the value.
-  else if ($display['type'] == 'colorfield_raw_rgb') {
+  elseif ($display['type'] == 'colorfield_raw_rgb') {
     $element['display_hash'] = array(
       '#type' => 'checkbox',
       '#title' => t('Display the # in the output of the color'),
@@ -197,12 +196,12 @@ function colorfield_field_formatter_settings_summary($field, $instance, $view_mo
     }
   }
   // Displays the width & height of the block as summary.
-  else if ($display['type'] == 'colorfield_color_swatch') {
+  elseif ($display['type'] == 'colorfield_color_swatch') {
     $summary[] = t('Width: @width px', array('@width' => $settings['width']));
     $summary[] = t('Height: @height px', array('@height' => $settings['height']));
   }
   // Displays if the hash is displayed or not.
-  else if ($display['type'] == 'colorfield_raw_rgb') {
+  elseif ($display['type'] == 'colorfield_raw_rgb') {
     $summary[] = ($settings['display_hash']) ? t('The raw will be prefixed with #.') : t('The raw will not be prefixed with #.');
   }
 
@@ -237,6 +236,7 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
         );
       }
       break;
+
     // This formatter simply outputs the raw RGB value prefixed or not with
     // the hash.
     case 'colorfield_raw_rgb':
@@ -245,6 +245,7 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
         $element[$delta] = array('#markup' => $color);
       }
       break;
+
     // Adds an empty DIV, the background of which uses the selected colour.
     // Could be used, for example, to display a swatch of the color.
     case 'colorfield_color_swatch':
@@ -254,7 +255,7 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
           '#tag' => 'div',
           '#attributes' => array(
             'class' => array('colorfield-color-swatch'),
-            'style' => 'width: ' . $display['settings']['width'] . 'px; height: ' . $display['settings']['height'] . 'px; background-color:' . $item['rgb'] . ';'
+            'style' => 'width: ' . $display['settings']['width'] . 'px; height: ' . $display['settings']['height'] . 'px; background-color:' . $item['rgb'] . ';',
           ),
         );
       }
@@ -310,9 +311,7 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
           '#suffix' => '<div class="colorfield-picker"></div>',
           '#attributes' => array('class' => array('colorfield-colorpicker')),
           '#attached' => array(
-            'library' => array(
-              array('system', 'farbtastic')
-            ),
+            'library' => array(array('system', 'farbtastic')),
             'js' => array(drupal_get_path('module', 'colorfield') . '/js/colorfield-farbtastic.js'),
           ),
         );
@@ -397,7 +396,7 @@ function colorfield_field_widget_settings_form($field, $instance) {
           'input[name="instance[widget][settings][colorfield_options][colorfield_enable_colorpicker]"]' => array('checked' => FALSE),
         ),
       ),
-      '#description' => t('If you are using jQuery 1.7 or a more recent version (via jQuery update), you will expose the !minicolor_link color picker.', array('!minicolor_link' => l('minicolor', 'https://github.com/claviska/jquery-miniColors'))),
+      '#description' => t('If you are using jQuery 1.7 or a more recent version (via jQuery update), you will expose the !minicolor_link color picker.', array('!minicolor_link' => l(t('minicolor'), 'https://github.com/claviska/jquery-miniColors'))),
       '#default_value' => $default_value_colorpicker_type,
     );
   }

@@ -4,14 +4,15 @@
  * Implements hook_requirements().
  */
 function colorfield_minicolors_requirements($phase) {
+  $t = get_t();
   if ($phase == 'install') {
     $jquery = drupal_get_library('system', 'jquery');
     if (!version_compare($jquery['version'], '1.7.1', '>=')) {
       return array(
         'colorfiel_minicolors_jquery_version' => array(
-          'title' => t('Wrong version of jQuery installed.'),
-          'value' => t('jQuery minicolors requires a higher version of jQuery >= 1.7.1.'),
-          'description' => t('In order to enable jQuery minicolors as a color picker, you need to enable jQuery update and configure jQuery version to be >= 1.7.1.'),
+          'title' => $t('Wrong version of jQuery installed.'),
+          'value' => $t('jQuery minicolors requires a higher version of jQuery >= 1.7.1.'),
+          'description' => $t('In order to enable jQuery minicolors as a color picker, you need to enable jQuery update and configure jQuery version to be >= 1.7.1.'),
           'severity' => REQUIREMENT_ERROR,
         ),
       );
@@ -22,9 +23,9 @@ function colorfield_minicolors_requirements($phase) {
     if (!version_compare($jquery['version'], '1.7.1', '>=')) {
       return array(
         'colorfiel_minicolors_jquery_version' => array(
-          'title' => t('Wrong version of jQuery installed.'),
-          'value' => t('jQuery minicolors requires a higher version of jQuery >= 1.7.1.'),
-          'description' => t('In order to enable jQuery minicolors as a color picker, you need to enable jQuery update and configure jQuery version to be >= 1.7.1.'),
+          'title' => $t('Wrong version of jQuery installed.'),
+          'value' => $t('jQuery minicolors requires a higher version of jQuery >= 1.7.1.'),
+          'description' => $t('In order to enable jQuery minicolors as a color picker, you need to enable jQuery update and configure jQuery version to be >= 1.7.1.'),
           'severity' => REQUIREMENT_ERROR,
         ),
       );
