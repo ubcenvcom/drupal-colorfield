@@ -23,34 +23,38 @@ function colorfield_minicolors_field_widget_colorfield_unified_textfield_form_al
   // Attaches the library to the field based on the selected colorpicker.
   $settings = $context['instance']['widget']['settings'];
   if (isset($settings['colorfield_options']['colorfield_enable_colorpicker']) && $settings['colorfield_options']['colorfield_colorpicker_type'] == 'minicolors') {
-    $element['rgb']['#attached'] = array(
-      'library' => array(array('colorfield_minicolors', 'minicolors')),
-      'js' => array(drupal_get_path('module', 'colorfield_minicolors') . '/js/colorfield-minicolors.js'),
-    );
+    // Load jQuery minicolors if we can't, farbtastic will fallback.
+    if (($library = libraries_load('jquery-miniColors')) && !empty($library['loaded'])) {
+      $element['rgb']['#attached'] = array(
+        'js' => array(drupal_get_path('module', 'colorfield_minicolors') . '/js/colorfield-minicolors.js'),
+      );
+    }
+    else {
+      watchdog('colorfield_minicolors', 'The library can not be loaded.');
+    }
   }
 }
 
 /**
- * Implements hook_library().
+ * Implements hook_library_info().
  */
-function colorfield_minicolors_library() {
+function colorfield_minicolors_libraries_info() {
   return array(
-    'minicolors' => array(
-      'title' => t('jQuery Minicolors'),
-      'website' => 'http://labs.abeautifulsite.net/jquery-miniColors/',
-      'version' => '2.0.0-beta3',
-      'js' => array(
-        drupal_get_path('module', 'colorfield_minicolors') . '/lib/jquery.minicolors.js' => array('group' => JS_LIBRARY),
+    'jquery-miniColors' => array(
+      'name' => 'jQuery Minicolors',
+      'vendor url' => 'http://labs.abeautifulsite.net/jquery-miniColors/',
+      'download url' => 'https://github.com/claviska/jquery-miniColors/tags',
+      'version arguments' => array(
+        'file' => 'readme.md',
+        'pattern' => '@Version:\s+([0-9a-zA-Z\.-]+)@',
       ),
-      'css' => array(
-        drupal_get_path('module', 'colorfield_minicolors') . '/lib/jquery.minicolors.css' => array(
-          'type' => 'file',
-          'media' => 'screen',
+      'files' => array(
+        'js' => array(
+          'jquery.minicolors.js',
         ),
-      ),
-      'dependencies' => array(
-        // Require jQuery UI core by System module.
-        array('system', 'jquery'),
+        'css' => array(
+          'jquery.minicolors.css',
+        ),
       ),
     ),
   );
