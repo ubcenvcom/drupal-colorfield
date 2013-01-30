@@ -314,17 +314,19 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
         '#size' => 7,
         '#maxlength' => 7,
       );
-      // Add Farbtastic color picker and attach its behavior if the colorpicker
-      // is enabled.
-      if ($instance['settings']['colorfield_enable_colorpicker']) {
+      // Prepare the base markup for the color picker if enabled.
+      if ($instance['widget']['settings']['colorfield_options']['colorfield_enable_colorpicker']) {
         $widget += array(
           '#suffix' => '<div class="colorfield-picker"></div>',
           '#attributes' => array('class' => array('colorfield-colorpicker')),
-          '#attached' => array(
+        );
+        // Attach Farbtastic color picker when it's the color picker selected.
+        if ($instance['widget']['settings']['colorfield_options']['colorfield_colorpicker_type'] == 'farbtastic') {
+          $widget['#attached'] = array(
             'library' => array(array('system', 'farbtastic')),
             'js' => array(drupal_get_path('module', 'colorfield') . '/js/colorfield-farbtastic.js'),
-          ),
-        );
+          );
+        }
       }
       break;
 
