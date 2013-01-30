@@ -260,6 +260,7 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
         $element[$delta] = array(
           '#type' => 'html_tag',
           '#tag' => 'div',
+          '#value' => '',
           '#attributes' => array(
             'class' => array('colorfield-color-swatch'),
             'style' => 'width: ' . $display['settings']['width'] . 'px; height: ' . $display['settings']['height'] . 'px; background-color:' . $item['rgb'] . ';',
@@ -287,10 +288,12 @@ function colorfield_field_widget_info() {
     'colorfield_unified_textfield' => array(
       'label' => t('Color code (eg: #FFAA77)'),
       'field types' => array('colorfield'),
+      'weight' => 0,
     ),
     'colorfield_split_textfield' => array(
       'label' => t('Split Red, Green and Blue text fields'),
       'field types' => array('colorfield'),
+      'weight' => 1,
     ),
   );
 }
