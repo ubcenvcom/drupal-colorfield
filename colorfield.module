@@ -76,12 +76,14 @@ function colorfield_field_validate($entity_type, $entity, $field, $instance, $la
 }
 
 /**
- * Implements hook_field_attach_submit().
+ * Implements hook_field_presave().
  */
 function colorfield_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
   // Rewrite the clean RGB value.
-  foreach ($items as $key => $item) {
-    $items[$key]['rgb'] = '#' . implode('', $item['rgb']);
+  if ($instance['widget']['type'] == 'colorfield_split_textfield') {
+    foreach ($items as $key => $item) {
+      $items[$key]['rgb'] = '#' . implode('', $item['rgb']);
+    }
   }
 }
 
@@ -100,7 +102,12 @@ function colorfield_field_widget_error($element, $error, $form, &$form_state) {
  */
 function colorfield_field_is_empty($item, $field) {
   // Detect if the field is empty (the three color components are empty).
-  return empty($item['rgb']['r']) && empty($item['rgb']['g']) && empty($item['rgb']['b']);
+  if (is_array($item['rgb'])) {
+    return empty($item['rgb']['r']) && empty($item['rgb']['g']) && empty($item['rgb']['b']);
+  }
+  else {
+    return empty($item['rgb']);
+  }
 }
 
 /**
@@ -292,12 +299,12 @@ function colorfield_field_widget_info() {
  * Implements hook_field_widget_form().
  */
 function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-  $value = isset($items[$delta]['rgb']) ? $items[$delta]['rgb'] : '';
   $widget = $element;
 
   $widget['#delta'] = $delta;
   switch ($instance['widget']['type']) {
     case 'colorfield_unified_textfield':
+      $value = isset($items[$delta]['rgb']) ? $items[$delta]['rgb'] : '';
       $widget += array(
         '#type' => 'textfield',
         '#default_value' => $value,
@@ -319,15 +326,24 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
       break;
 
     case 'colorfield_split_textfield':
-      // Extract each component of the color as an array key.
-      // If we don't have a valid color (#AAAAAA) initialize empty values.
-      if (strlen($value) == '7') {
-        $raw_value = substr($value, 1);
-        $color = array(
-          'r' => $raw_value{0} . $raw_value{1},
-          'g' => $raw_value{2} . $raw_value{3},
-          'b' => $raw_value{4} . $raw_value{5},
-        );
+      // If we have a value for this field delta.
+      // If we don't, just consider empty strings as the default value.
+      if (isset($items[$delta]['rgb'])) {
+        $color = $items[$delta]['rgb'];
+        // Then if the color value is a string we need to split it. It happens when
+        // the form is submitted (check the hook_field_presave()).
+        // We don't have a string if the field comes from the default value
+        // of the field settings. (Ask core maintainers why...).
+        if (is_string($items[$delta]['rgb'])) {
+          if (strlen($color) == '7') {
+            $raw_value = substr($color, 1);
+            $color = array(
+              'r' => $raw_value{0} . $raw_value{1},
+              'g' => $raw_value{2} . $raw_value{3},
+              'b' => $raw_value{4} . $raw_value{5},
+            );
+          }
+        }
       }
       else {
         $color = array(
