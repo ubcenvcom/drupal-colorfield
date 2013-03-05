@@ -44,9 +44,9 @@ function colorfield_minicolors_libraries_info() {
       'name' => 'jQuery Minicolors',
       'vendor url' => 'http://labs.abeautifulsite.net/jquery-miniColors/',
       'download url' => 'https://github.com/claviska/jquery-miniColors/tags',
+      'version callback' => 'colorfield_minicolors_get_version',
       'version arguments' => array(
-        'file' => 'readme.md',
-        'pattern' => '@Version:\s+([0-9a-zA-Z\.-]+)@',
+        'file' => 'component.json',
       ),
       'files' => array(
         'js' => array(
@@ -58,4 +58,21 @@ function colorfield_minicolors_libraries_info() {
       ),
     ),
   );
+}
+
+/**
+ * Overrides the function to get the version of the library.
+ *
+ * @see libraries_get_version().
+ */
+function colorfield_minicolors_get_version($library, $options) {
+  $file = DRUPAL_ROOT . '/' . $library['library path'] . '/' . $options['file'];
+  if (empty($options['file']) || !file_exists($file)) {
+    return;
+  }
+  if ($content = file_get_contents($file)) {
+    $library_data = json_decode($content);
+    return $library_data->version;
+  }
+  return;
 }
