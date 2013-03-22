@@ -63,7 +63,7 @@ function colorfield_minicolors_libraries_info() {
 /**
  * Overrides the function to get the version of the library.
  *
- * @see libraries_get_version().
+ * @see libraries_get_version()
  */
 function colorfield_minicolors_get_version($library, $options) {
   $file = DRUPAL_ROOT . '/' . $library['library path'] . '/' . $options['file'];

@@ -335,8 +335,8 @@ function colorfield_field_widget_form(&$form, &$form_state, $field, $instance, $
       // If we don't, just consider empty strings as the default value.
       if (isset($items[$delta]['rgb'])) {
         $color = $items[$delta]['rgb'];
-        // Then if the color value is a string we need to split it. It happens when
-        // the form is submitted (check the hook_field_presave()).
+        // Then if the color value is a string we need to split it. It happens
+        // when the form is submitted (check the hook_field_presave()).
         // We don't have a string if the field comes from the default value
         // of the field settings. (Ask core maintainers why...).
         if (is_string($items[$delta]['rgb'])) {
