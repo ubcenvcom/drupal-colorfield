@@ -248,7 +248,7 @@ function colorfield_field_formatter_view($entity_type, $entity, $field, $instanc
     // the hash.
     case 'colorfield_raw_rgb':
       foreach ($items as $delta => $item) {
-        $color = ($display['settings']['display_hash'])? $item['rgb'] : substr($item['rgb'], 1);
+        $color = ($display['settings']['display_hash']) ? $item['rgb'] : substr($item['rgb'], 1);
         $element[$delta] = array('#markup' => $color);
       }
       break;
@@ -398,7 +398,7 @@ function colorfield_field_widget_settings_form($field, $instance) {
       '#type' => 'fieldset',
       '#title' => t('Color selection options'),
     );
-    $default_value_colorpicker = (isset($widget['settings']['colorfield_options']['colorfield_enable_colorpicker']))? $widget['settings']['colorfield_options']['colorfield_enable_colorpicker'] : $settings['colorfield_enable_colorpicker'];
+    $default_value_colorpicker = (isset($widget['settings']['colorfield_options']['colorfield_enable_colorpicker'])) ? $widget['settings']['colorfield_options']['colorfield_enable_colorpicker'] : $settings['colorfield_enable_colorpicker'];
     $form['colorfield_options']['colorfield_enable_colorpicker'] = array(
       '#type' => 'checkbox',
       '#title' => t('Enable the color picker.'),
