@@ -98,9 +98,7 @@ function colorfield_field_presave($entity_type, $entity, $field, $instance, $lan
  */
 function colorfield_field_widget_error($element, $error, $form, &$form_state) {
   // Mark components in error.
-  foreach ($error as $key => $error_element) {
-    form_error($element['rgb'][$key], $error_element['message']);
-  }
+  form_error($element['rgb'], $error['message']);
 }
 
 /**
