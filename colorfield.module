@@ -304,7 +304,7 @@ function colorfield_field_widget_info() {
       'weight' => 0,
     ),
     'colorfield_split_textfield' => array(
-      'label' => t('Split Red, Green and Blue text fields'),
+      'label' => t('Split hex code text based on RGB (eg: FF AA 77)'),
       'field types' => array('colorfield'),
       'weight' => 1,
     ),
