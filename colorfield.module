@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * A simple color field module with a color picker.
@@ -11,7 +12,8 @@ function colorfield_theme() {
   return array(
     'colorfield_colored_message' => array(
       'variables' => array(
-        'text_color' => 'black', 'text_message' => '',
+        'text_color' => 'black',
+        'text_message' => '',
       ),
       'template' => 'templates/colorfield-colored-message',
     ),
@@ -141,7 +143,6 @@ function colorfield_field_formatter_info() {
     ),
   );
 }
-
 
 /**
  * Implements hook_field_formatter_settings_form().
@@ -297,7 +298,7 @@ function colorfield_field_widget_info() {
       'settings' => array(
         'colorfield_options' => array(
           'colorfield_enable_colorpicker' => TRUE,
-          'colorfield_colorpicker_type' => 'farbtastic'
+          'colorfield_colorpicker_type' => 'farbtastic',
         ),
       ),
       'weight' => 0,
