@@ -75,7 +75,7 @@ function colorfield_field_validate($entity_type, $entity, $field, $instance, $la
       foreach ($item['rgb'] as $key => $color_component) {
         // Check if every color component is a valid hexadecimal value.
         if (!preg_match('@^[0-9a-f]{2}$@i', $color_component)) {
-          $errors[$field['field_name']][$langcode][$delta]['rgb'][$key] = array(
+          $errors[$field['field_name']][$langcode][$delta][] = array(
             'error' => 'colorfield_invalid_component_value',
             'message' => t('%name: the color component you specified is not valid, you must use a hexadecimal value (eg: 00, 5D, FF...).', array('%name' => $instance['label'])),
           );
