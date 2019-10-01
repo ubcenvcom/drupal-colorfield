@@ -573,7 +573,7 @@ function colorfield_feeds_processor_targets_alter(&$targets, $entity_type, $bund
 /**
  * Implements hook_feeds_set_target().
  */
-function colorfield_feeds_set_target($source, $entity, $target, $feed_element) {
+function colorfield_feeds_set_target(FeedsSource $source, $entity, $target, $feed_element, array $mapping) {
   if (empty($feed_element)) {
     return;
   }
@@ -584,11 +584,14 @@ function colorfield_feeds_set_target($source, $entity, $target, $feed_element) {
 
   $info = field_info_field($target);
 
+  // Get language
+  $language = isset($entity->language) ? $entity->language : $mapping['language'];
+
   // Iterate over all values.
-  $field = isset($entity->$target) ? $entity->$target : array($entity->language => array());
+  $field = isset($entity->$target) ? $entity->$target : array($language => array());
 
   // Allow for multiple mappings to the same target.
-  $delta = count($field[$entity->language]);
+  $delta = count($field[$language]);
 
   foreach ($feed_element as $f) {
     if ($info['cardinality'] == $delta) {
@@ -600,7 +603,7 @@ function colorfield_feeds_set_target($source, $entity, $target, $feed_element) {
     }
 
     if (is_scalar($f)) {
-      $field[$entity->language][$delta]['rgb'] = $f;
+      $field[$language][$delta]['rgb'] = $f;
       $delta++;
     }
   }
